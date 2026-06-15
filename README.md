@@ -168,6 +168,44 @@ Then open:
 http://<minikube-ip>:30080
 ```
 
+## Delete the Application
+
+Delete the Argo CD application:
+
+```bash
+kubectl delete application hello-world-app -n argocd
+```
+
+Because this application has automated pruning enabled, Argo CD should also
+remove the Kubernetes resources it manages in the `nginxdemos` namespace.
+
+Verify the cleanup:
+
+```bash
+kubectl get applications -n argocd
+kubectl get all -n nginxdemos
+```
+
+If the deployment or service still exists, remove them manually:
+
+```bash
+kubectl delete deployment hello-world -n nginxdemos
+kubectl delete service hello-world-service -n nginxdemos
+```
+
+If you no longer need the application namespace, delete it:
+
+```bash
+kubectl delete namespace nginxdemos
+```
+
+If you also want to remove Argo CD from the cluster, delete the Argo CD
+namespace:
+
+```bash
+kubectl delete namespace argocd
+```
+
 ## Stop Minikube
 
 Stop the local cluster:
