@@ -11,6 +11,8 @@ service on port `30080`.
 
 ```text
 .
+|-- .github/workflows/
+|   `-- validate.yaml         # GitHub Actions validation pipeline
 |-- application.yaml          # Argo CD Application definition
 `-- manifests/
     |-- deployment.yaml       # Hello World Deployment
@@ -126,6 +128,25 @@ kubectl get all -n nginxdemos
 
 If automated sync is working, the application should converge to a healthy and
 synced state.
+
+## Pipeline
+
+This repository includes a GitHub Actions validation pipeline in
+`.github/workflows/validate.yaml`.
+
+The pipeline runs on pushes to `main`, pull requests targeting `main`, and
+manual dispatches. It validates the Kubernetes manifests and a temporary copy of
+the Argo CD `Application`.
+
+During the workflow, `spec.source.repoURL` is rendered dynamically from the
+GitHub Actions context:
+
+```bash
+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git
+```
+
+This means the tracked `application.yaml` is not rewritten by CI, and no cluster
+credentials are required because the pipeline only validates manifests.
 
 ## Access the Hello World App
 

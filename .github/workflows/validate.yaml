@@ -1,0 +1,43 @@
+name: Validate manifests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Kubernetes and Argo CD manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Render Argo CD application repoURL
+        run: |
+          set -euo pipefail
+
+          mkdir -p .rendered
+          cp application.yaml .rendered/application.yaml
+
+          ARGOCD_REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          sed -i.bak -E "s#^([[:space:]]*repoURL:).*#\1 ${ARGOCD_REPO_URL}#" .rendered/application.yaml
+          rm .rendered/application.yaml.bak
+
+          grep -q "repoURL: ${ARGOCD_REPO_URL}" .rendered/application.yaml
+          echo "Rendered Argo CD repoURL: ${ARGOCD_REPO_URL}"
+
+      - name: Validate Kubernetes manifests
+        uses: docker://ghcr.io/yannh/kubeconform:latest
+        with:
+          args: -strict -summary manifests
+
+      - name: Validate rendered Argo CD application
+        uses: docker://ghcr.io/yannh/kubeconform:latest
+        with:
+          args: -strict -summary -ignore-missing-schemas .rendered/application.yaml
